@@ -9,7 +9,7 @@
 </head>
 </head>
 <body>
-<h1 align="center">Welcome to Mithun Technology - POLL SCM Demo... </h1>
+<h1 align="center">Welcome to Mithun Technology - GitHub Webhook demo... </h1>
 <h1 align="center"> Mithun Software Solutions- Very Good Training center for DevOps- we are started demo on weekend batches on sep 3rd- The timings 8pm to 9.30pm IST......</h1>
 <hr>
 <br>
