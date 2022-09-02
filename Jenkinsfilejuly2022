@@ -38,7 +38,6 @@ Throw e
 }
 finally {
 SlackNotifications(currentBuild.result)
-
 }
 
 
