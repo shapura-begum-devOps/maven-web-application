@@ -6,7 +6,7 @@ echo "Node Name is: ${env. NODE_NAME}"
 echo "Job Name is: ${env. JOB_NAME}"
 
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([pollSCM('* * * * *')])])
-
+try{
 stage('CheckOutCode'){
 git branch: 'development', credentialsId: 'ba64e169-1edc-4f20-92ef-e890027ded6c', url: 'https://github.com/shapura-begum-devOps/maven-web-application.git'
 }
@@ -31,6 +31,16 @@ sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war  ec2-user@1
 }
 
 */
+}//try block closing.
+Catch (e){
+SlackNotifications(currentBuild.result)
+Throw e	
+}
+finally{
+SlackNotifications(currentBuild.result)
+
+}
+
 
 }//Node closing
 
