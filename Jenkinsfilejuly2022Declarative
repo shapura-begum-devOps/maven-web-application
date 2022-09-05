@@ -1,0 +1,88 @@
+pipeline{
+agent any
+
+tools{
+maven 'maven3.8.5'
+}
+options {
+  timestamps()
+  buildDiscarder (logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5'))
+}
+triggers {
+  pollSCM ('* * * * *')
+  //cron ('* * * * *')
+}
+
+
+stages{
+stage('CheckOutCode'){
+steps{
+     SlackNotifications('STARTED')
+git branch: 'development', credentialsId: 'ba64e169-1edc-4f20-92ef-e890027ded6c', url: 'https://github.com/shapura-begum-devOps/maven-web-application.git'
+}
+}
+//This stage will do the build
+stage('Build'){
+steps{
+sh "mvn clean package"
+}
+}
+//This stsge will execute sonarqube report
+stage('ExecuteSonarQubeReport'){
+steps{
+sh "mvn clean sonar:sonar"
+}
+}
+//This stage will upload the Artifacts into nexus repo
+stage('UploadArtifactIntoArtifactoryRepo'){
+steps{
+sh "mvn clean deploy"
+}
+}
+//Deploy Application Into Tomcat server
+stage('DeployAppIntoServer'){
+steps{
+sshagent(['56f945ac-d152-4dab-9662-99ba47343bad']) {
+sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war  ec2-user@172.31.34.61:/opt/apache-tomcat-9.0.65/webapps/"
+}
+}
+}
+
+}//stages closing
+post {
+  success {
+    SlackNotifications(currentBuild.result)
+
+  }
+  failure {
+    SlackNotifications(currentBuild.result)
+
+  }
+}
+
+}//pipeline closing
+
+//Code snippet for sending sla]ck notifications.
+def  SlackNotifications(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESS'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    colorName= 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESS') {
+    colorName = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    colorName = 'RED'
+    colorCode = '#FF0000'
+  }
+  // Send notifications
+  slackSend (color: colorCode, message: summary, channel: "#walmart")
+}
